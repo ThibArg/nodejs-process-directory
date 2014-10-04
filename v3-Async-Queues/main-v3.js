@@ -1,5 +1,9 @@
 /*	main-v3.js
 
+	To run this quick test:
+		cd /path/to/v3-Async-Queues
+		node main-v3.js
+
 */
 "use strict";
 var path = require("path");
@@ -12,20 +16,26 @@ console.log("THE QUEUES-ASYNC IMPLEMENTATION");
 //var dir = new DirectoryHandler("/Users/thibaud/Documents");
 var dir = new DirectoryHandler("/Users/thibaud/Pictures");
 
-console.log("Ready to parse: " + dir.path);
-console.log("Waiting a bit...");
-function possiblyDoIt() {
-	if(fs.existsSync("/Users/thibaud/Desktop/gogogo.txt")) {
-		console.log("Go! Go! Go!");
-		ZE_DO_IT();
-	} else {
-		console.log("NO GO");
-		setTimeout(possiblyDoIt, 3000);
-	}
-}
-possiblyDoIt();
+function formatToHumanReadable(inBytes) {
+	var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'],
+		idx;
+    if (inBytes == 0) {
+    	return '0';
+    }
 
-function ZE_DO_IT() {
+    idx = parseInt(Math.floor(Math.log(inBytes) / Math.log(1024)));
+    return (inBytes / Math.pow(1024, idx)).toFixed(2) + ' ' + sizes[idx];
+};
+
+console.log("Ready to parse: " + dir.path);
+var kWAIT_DURATION = 3000; // milliseconds
+console.log("Waiting " + kWAIT_DURATION + "ms (let you start monitoring for example)");
+setTimeout(function() {
+	console.log("Parsing " + dir.path + "...");
+	DO_IT();
+}, kWAIT_DURATION);
+
+function DO_IT() {
 
 
 	var config = {
@@ -42,7 +52,7 @@ function ZE_DO_IT() {
 			return true;
 		},
 		ignoreInvisible: true,
-		moduloForCallback: 250
+		moduloForCallback: 10000 //250
 	}
 
 	var deepestFoldersPath = [];
@@ -53,7 +63,7 @@ function ZE_DO_IT() {
 	dir.parse(config, function(err, data) {
 
 		if(err) {
-			console.log("Y A ERREUR: " + err);
+			console.log("An error occured: " + err);
 		} else {
 			if(data.done) {
 				tEnd = Date.now();
@@ -71,11 +81,11 @@ function ZE_DO_IT() {
 				console.log("= = = = = = = = = ");
 
 			} else {
-				//console.log(data.countObjects);
+				console.log("Parsed: " + data.countFiles + " files. Total size: " + formatToHumanReadable(data.fullSizeInBytes));
 			}
 		}
 	});
-} // ZE_DO_IT
+} // DO_IT
 
 /*
 var http = require('http');

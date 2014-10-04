@@ -1,31 +1,41 @@
 /*	main-v2.js
 
+	To run this quick test:
+		cd /path/to/v2-Naive-Async
+		node main-v2.js
+
 */
 "use strict";
 var path = require("path");
 var fs = require("fs");
 var util = require("util")
 var DirectoryHandler = require("./DirectoryHandler-v2.js");
-console.log("THE NAIVE-SYNC IMPLEMENTATION");
+console.log("THE NAIVE-ASYNC IMPLEMENTATION");
 var dir = new DirectoryHandler("/Users/thibaud/Desktop/Documents-for-import/");
 //var dir = new DirectoryHandler("/Users/thibaud/GitHub/");
 //var dir = new DirectoryHandler("/Users/thibaud/Documents");
 var dir = new DirectoryHandler("/Users/thibaud/Pictures");
 
-console.log("Ready to parse: " + dir.path);
-console.log("Waiting a bit...");
-function possiblyDoIt() {
-	if(fs.existsSync("/Users/thibaud/Desktop/gogogo.txt")) {
-		console.log("Go! Go! Go!");
-		ZE_DO_IT();
-	} else {
-		console.log("NO GO");
-		setTimeout(possiblyDoIt, 3000);
-	}
-}
-possiblyDoIt();
+function formatToHumanReadable(inBytes) {
+	var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'],
+		idx;
+    if (inBytes == 0) {
+    	return '0';
+    }
 
-function ZE_DO_IT() {
+    idx = parseInt(Math.floor(Math.log(inBytes) / Math.log(1024)));
+    return (inBytes / Math.pow(1024, idx)).toFixed(2) + ' ' + sizes[idx];
+};
+
+console.log("Ready to parse: " + dir.path);
+var kWAIT_DURATION = 3000; // milliseconds
+console.log("Waiting " + kWAIT_DURATION + "ms (let you start monitoring for example)");
+setTimeout(function() {
+	console.log("Parsing " + dir.path + "...");
+	DO_IT();
+}, kWAIT_DURATION);
+
+function DO_IT() {
 	var config = {
 		
 		canAddObject: function(inPath, inStats) {
@@ -44,7 +54,7 @@ function ZE_DO_IT() {
 			return true;
 		},
 		ignoreInvisible: true,
-		moduloForCallback: 50
+		moduloForCallback: 10000 // 250
 	}
 
 	var deepestFoldersPath = [];
@@ -56,7 +66,7 @@ function ZE_DO_IT() {
 	dir.parse(config, function(err, data) {
 
 		if(err) {
-			console.log("Y A ERREUR: " + err);
+			console.log("An error occured: " + err);
 		} else {
 			if(data.done) {
 				tEnd = Date.now();
@@ -73,88 +83,18 @@ function ZE_DO_IT() {
 				console.log("= = = = = = = = = ");
 				console.log("= = = = = = = = = ");
 
-				/*
-				dir.applyToFilesSync(function(inErr, inData) {
-					console.log(inData.file);
-					console.log(inData.count);
-					if(inData.count % 200 == 0) {
-						inData.truthCallback(false);
-					}
-				});
-				*/			
-
-				/*
-				console.log("= = = = = = = = = ");
-				console.log("= = = = = = = = = ");
-				console.log(dir.pathOfSubDirectories);
-				console.log("= = = = = = = = = ");
-				console.log("= = = = = = = = = ");
-				console.log("= = = = = = = = = ");
-				console.log("= = = = = = = = = ");
-				console.log(dir.deepestDirectoryPaths);
-				*/
-				
-				//console.log(dir.pathOfSubDirectories);
-				/*
-				console.log("= = = = = = = = = ");
-				console.log("= = = = = = = = = ");
-				console.log("= = = = = = = = = ");
-				console.log("= = = = = = = = = ");
-				console.log(dir.getSubDirectoryPaths().length);
-				console.log(dir.getDeepestDirectoryPaths().length);
-				console.log("= = = = = = = = = ");
-				console.log("= = = = = = = = = ");
-				*/
-
-				/*
-				var c = 0;
-				var d = 0;
-				dir.applyToFiles(function(err, data) {
-					if(err) {
-						console.log("ERROR ? " + err);
-					} else {
-						c += 1;
-						if(fs.statSync(data.file).isDirectory()) {
-							d -= 1000000;
-						} else {
-							d += 2;
-						}
-						if((data.count) % 10000 === 0) {
-							console.log(data.count);
-						}
-						data.truthCallback(true);
-					}
-				});
-
-				console.log("Et hop: " + c + " - " + d);
-				*/
-				
-				/*
-				var a = dir.pathOfSubDirectories;
-				var b = dir.getTOTO();
-				var i;
-				if(a.length !== b.length) {
-					console.log("zob " + a.length  + " / " + b.length );
-				} else {
-					for(i = 0; i < a.length; i++) {
-						if(a[i] !== b[i]) {
-							console.log("Zob à indice " + i);
-						}
-					}
-					console.log("DONE");
-				}
-				*/
-
 			} else {
-				//console.log(data.countObjects);
+				console.log("Parsed: " + data.countFiles + " files. Total size: " + formatToHumanReadable(data.fullSizeInBytes));
 			}
 		}
 	});
-} // ZE_DO_IT
+} // DO_IT
 
+/* To test how node responds to requests in the min thread:
 var http = require('http');
 http.createServer(function (req, res) {
   res.writeHead(200, {'Content-Type': 'text/plain'});
   res.end('Hello World\n');
 }).listen(1337, '127.0.0.1');
-
+console.log("http server listening");
+*/
